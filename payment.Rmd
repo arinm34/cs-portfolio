@@ -1,0 +1,80 @@
+---
+title: "Paid Tickets for BVB"
+author: "Arin Mahapatra"
+output: html_document
+date: "2024-10-03"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, error = TRUE)
+libraries <- c("ggplot2", "dplyr", "tidyr", "readr", "tidyverse", "stringr")
+lapply(libraries, library, character.only = TRUE)
+```
+## Product for Venmo Payments - ALL PEOPLE PAID through VENMO
+
+Here are the contents of reading the two csv files and checking if their outputs match for the payment transactions that were made. These individuals have a TRUE next to their name, this INDICATES that they have paid their dues for the BVB and should receive a ticket confirmation.
+
+```{r}
+venmo_tickets <- read_csv("CSV/venmo_payments.csv")
+orders_final <- read_csv("CSV/orders_info.csv")
+
+venmo_tickets <- venmo_tickets %>%
+  select(Datetime, From, "Amount (total)") %>% 
+  mutate(FullName = From) %>% 
+  slice(8:n())
+
+orders_final <- orders_final %>%
+  mutate(FullName = paste(`First Name`, `Last Name`)) %>% 
+  filter(tolower(Platform) == "venmo") %>% 
+  select("First Name", "Last Name", "Email", "Platform", "Local Emergency Contact - Full Name (preferably someone who is also attending BVB)", "Local Emergency Contact - Phone Number") %>% 
+  mutate(FullName = paste(`First Name`, `Last Name`))
+
+venmo_final <- venmo_tickets %>%
+  left_join(orders_final, by = "FullName") %>%
+  select(-`From`, -`First Name`, -`Last Name`, -`From`) %>% 
+  mutate(Paid = if_else(!is.na(FullName), TRUE, FALSE)) %>% 
+  drop_na()
+
+print(venmo_final, n = Inf) # works perfectly (proper formatting included)
+fullnames_list <- venmo_final %>% pull(FullName)
+print(fullnames_list)
+
+write.csv(venmo_final, "~/Desktop/ISA_BVB/venmo_list.csv", row.names = FALSE) # print into csv files
+```
+
+## Product for Zelle Payments - ALL PEOPLE PAID through ZELLE
+
+Here are the contents of reading the two csv files and checking if their outputs match for the payment transactions that were made. These individuals have a TRUE next to their name, this INDICATES that they have paid their dues for BVB and should receive a ticket confirmation.
+```{r}
+orders_final <- read_csv("CSV/orders_info.csv")
+zelle_list <- read_csv("CSV/zelle_list.csv")
+
+zelle_tickets <- zelle_list %>%
+  mutate(Date = as.Date(`Posted Date`, format = "%m/%d/%Y")) %>%  # Convert to Date type
+  filter(Date >= as.Date("2024-09-21")) %>% 
+  select(-`AccountNumber`, -`AccountType`, -`Check Number`, -`Category`, -`Note`, -`...10`, -`Date`) %>% 
+  mutate(FullName = str_extract(Description, "(?<=Zelle\\s)[A-Za-z]+(?:\\s[A-Za-z]+)?")) %>%
+  select(everything(), FullName) %>% 
+  filter(Amount == "$25.00") %>% 
+  mutate(FullName_lower = tolower(FullName)) %>% 
+  mutate(FirstNamePart = str_extract(FullName, "^[^ ]+")) %>% 
+  mutate(FirstNamePart = tolower(FirstNamePart))
+
+orders_final <- orders_final %>%
+  mutate(FullName = paste(`First Name`, `Last Name`)) %>% 
+  filter(Platform %in% c("zelle", "Zelle")) %>% 
+  mutate(FullName_lower = tolower(FullName)) %>% 
+  mutate(FirstNamePart = str_extract(FullName, "^[^ ]+")) %>% 
+  mutate(FirstNamePart = tolower(FirstNamePart))
+
+zelle_final <- zelle_tickets %>%
+  left_join(orders_final, by = "FirstNamePart", suffix = c("", ".order")) %>% 
+  drop_na()
+
+fullnames_list <- zelle_final %>% 
+  pull(FullName) %>% 
+  unique(fullnames_list)
+print(fullnames_list)
+
+write.csv(zelle_final, "~/Desktop/ISA_BVB/zelle_list.csv", row.names = FALSE)
+```
