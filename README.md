@@ -1,143 +1,143 @@
-# Arin Mahapatra — CS • Quant • SaaS Portfolio 🚀
+# P1 (3% of grade): Dockerized Git Analyzer
 
-Welcome to my personal Computer Science portfolio — a collection of **quantitative finance projects**, **entrepreneurial ventures**, and **SaaS tools**.  
-This repository showcases how I merge **algorithmic precision** with **founder-style adaptability** to build intelligent, scalable systems.
+## Overview
 
----
+In this project, you'll practice using Docker and shell scripts.  You'll build a dockerized tool that clones a git repo, extracts the difference between two branches, then summarizes the difference with the help of a small LLM (large language model).
 
-## 🧭 Overview
+Learning objectives:
+* follow directions to install Docker
+* write Dockerfiles to define how to build Docker images
+* use redirection and piping techniques to send data between files/processes
+* write a simple bash script
 
-I design and implement systems that make data, markets, and behavior **interpretable, predictive, and actionable**.  
-Each project integrates rigorous quantitative modeling with software systems thinking — reflecting my passion for both **finance** and **entrepreneurship**.
+Before starting, please review the [general project directions](../projects.md).
 
-> 💡 *“I design systems that think like traders and learn like founders.”*
+## Corrections/Clarifications
 
----
+* [2025.09.15] Updated `autobadger` to `1.0.3` to allow multi-line `apt-get`.
+* [2025.09.11] Updated `autobadger` to cover more cases for `apt-get` and `git diff` checks. This doesn't affect already submitted solutions.
+* [2025.09.11] Added some clarifications in `p1.md`. This doesn't affect already submitted solutions.
 
-## 📂 Repository Structure
+## AI Usage
 
-├── quant/ # Algorithmic trading, portfolio optimization, econometrics
-│ ├── backtesting/ # Historical simulations & strategy validation
-│ ├── options_visualizer/ # Derivatives pricing & Greeks dashboard
-│ ├── montecarlo_models/ # Simulation-based risk models
-│ └── data_pipeline/ # Automated ingestion & preprocessing scripts
+For this project, you must use Google Gemini (as provided by the University: https://it.wisc.edu/generative-ai-services-uw-madison/).  You may not use any other AI assistance.
 
-├── saas/ # Full-stack SaaS & automation tools
-│ ├── cloud9/ # Mindfulness & productivity journaling app
-│ └── paymenttracker/ # Google Sheets + Flask-based payment automation
+Fill in question answers about your interactions with Gemini as you go in [`ai.md`](ai.md).
 
-├── scripts/ # Reusable utilities (data cleaning, scraping, reporting)
-│ ├── scrape.py # Web scraping & ETL pipelines
-│ ├── finance_utils.py # Quant finance helper functions
-│ └── stats_helpers.py # Hypothesis testing & regression utilities
+## Part 1: Docker Install
 
-├── notebooks/ # Research notebooks
-│ ├── clustering_countries.ipynb
-│ ├── econ400_regression.ipynb
-│ └── portfolio_analysis.ipynb
+Carefully follow the directions here to install Docker on your virtual machine: https://docs.docker.com/engine/install/ubuntu/
 
-├── docs/ # Technical writeups, results, and reports
-│ ├── quant_methodology.pdf
-│ ├── architecture_diagram.png
-│ └── roadmap.md
+Notes:
+* There are several different approaches described under "Installation methods".  Use the directions under "Install using the apt repository".  Make sure you don't keep going after you reach "Install from a package".
+* The first step under "Install Docker Engine" has two options: "Latest" or "Specific version".  Choose **"Specific version"** (`VERSION_STRING=5:28.4.0-1~ubuntu.24.04~noble`).
 
-└── README.md # You are here 👋
+To avoid needing to run every Docker command with root, there are a few more steps you should do here:
+https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user
+(don't go beyond the "Manage Docker as a non-root user" section).
 
+Create some files to verify your Docker installation:
 
----
+```
+docker version > docker.txt
+docker compose version > compose.txt
+```
 
-## ⚙️ Core Technologies
+## Part 2: Docker Image: ollama base
 
-**Languages:** Python (Pandas, NumPy, PyTorch, QuantLib, Scikit-learn), R, C, SQL, Bash  
-**Frameworks:** Flask, Django, Airflow, Superset, LangChain  
-**Infrastructure:** Docker, Kubernetes, GCP, AWS, GitHub Actions  
-**Databases:** PostgreSQL, MongoDB, Pinecone, Google Sheets API  
-**Quant Tools:** PyPortfolioOpt, yfinance, backtesting.py, QuantLib  
-**Visualization:** Plotly, Dash, Matplotlib, Streamlit, Superset
+Write a Dockerfile named "Dockerfile.ollama" that can be built like this:
 
----
+```
+docker build -f Dockerfile.ollama -t p1-ollama .
+```
 
-## 💼 Featured Projects
+It should start from the latest LTS version of Ubuntu.  Inside the
+image, you should have ollama installed, with the "gemma3:1b" model
+already pulled.
 
-### 🧮 **Quant Research Toolkit**
-A modular Python framework for portfolio analytics and strategy simulation.  
-Implements backtesting, Sharpe/Sortino/Calmar ratio evaluation, and volatility modeling.
+> Ollama is a lightweight library for running and interacting with local language models.  
 
-- Optimized for **low-latency execution**
-- Configurable via `.yaml` strategy files
-- Integrates **real-time market data feeds**
+Ask Gemini to explain how to install, run, and prompt ollama.  Also
+prompt it to generate the Dockerfile for you.  
+> Like all LLMs, it's not a given that Gemini be correct--you might have to re-prompt it, do some back-and-forth and/or manual verification.
 
----
+Answer some questions
+about this in `ai.md`.  Brainstorm with Gemini about how to manually
+verify the Dockerfile does what you want before proceeding to part 3.
 
-### ☁️ **Cloud9 Framework**
-A personal SaaS for **emotional regulation, productivity, and self-optimization**.  
-Gamifies habit tracking with journaling prompts, reflection modules, and progress visualization.
+## Part 3: Analyzer Script
 
-- Built with **Flask + React**
-- Sentiment-based journaling analytics
-- Mobile-first design roadmap using **Flutter**
+Look at this repo:
+https://git.doit.wisc.edu/cdis/cs/courses/cs544/misc/calculator.
+There are a few branches.  Browse through them.
 
----
+Write an `analyze.sh` bash script that clones the repo, compares the
+`fix` branch to the `main` branch with a git diff, and generates a
+"prompt.txt" file (using both `>` and `>>` redirections).  The file
+should be formatted to look like this:
 
-### 💳 **PaymentTracker**
-Automation suite that syncs **Google Forms → Google Sheets → Payment Validation**.  
-Used for event and ticket management (Venmo + Zelle), built in Flask.
+```
+Summarize the following code diff:
+<git diff output here...>
+```
 
-- REST-based pipeline for real-time updates  
-- Auto-matching payments with unique identifiers  
-- Ideal for student orgs and small business automation
+Use `cat` and a pipe (`|`) to send the prompt to `ollama` to get a
+summary of the code change.  Note that even though gemma3:1b is quite
+small, it will run slowly on your VM because we only have access to
+CPUs (it would be much faster on a GPU).
 
----
+Gemini might be useful with some of the following:
+* explain the concept of git remotes
+* how to compare remote branches via diff
+* how to wait a while to give a server (ollama) a chance to startup before you try to communicate with it
+* other...
 
-## 📈 Quantitative Focus Areas
+**Requirements:** `analyze.sh` must use each of the following in a sensible way:
+ * use both `>` and `>>` (for making prompt.txt)
+ * use `&` and `&>` to run `ollama serve` in the background and record its output
+ * use `cat` and `|` to send the prompt to `ollama run ...`
 
-| Domain | Description |
-|--------|-------------|
-| **Portfolio Optimization** | Efficient frontier construction using PyPortfolioOpt |
-| **Econometrics & Regression** | Robust OLS, panel data, and instrumental variable models |
-| **Derivatives & Risk** | Greeks calculation, VaR/ES estimation via Monte Carlo |
-| **Clustering & ML** | Hierarchical, K-means, and DBSCAN for macroeconomic classification |
-| **Automation & APIs** | Real-time data pipelines with REST & WebSocket integrations |
+## Part 4: Docker Image: analyzer
 
----
+Create a `Dockerfile.analyzer` Dockerfile with `analyze.sh` and the
+necessary software installed so we can simply run the following to get
+an English description of the difference between the `fix` and `main`
+branches.
 
-## 🧪 Research Highlights
+```
+docker build -f Dockerfile.analyzer -t p1-analyzer .
+docker run p1-analyzer
+```
 
-- **Hierarchical Agglomerative Clustering on Socioeconomic Indicators** — explored global patterns using 6-dimensional country vectors.  
-- **Bayesian Language Model Classification** — probability-driven text language detection via multinomial modeling.  
-- **Statistical Earnings Analysis (Stata + R)** — causal inference on education, income, and physical characteristics.
+Your `Dockerfile.analyzer` should start from the image you created in
+Part 2 (`p1-ollama:latest`) so you don’t have to reinstall Ollama or
+re-pull the model.
 
----
+Note: during testing, we may want to build your second Docker image on
+bases other than your first image, so your `FROM` line should make use
+of a `${PROJECT}` env variable.  You can define the environment
+variable with a default like this, at the top of your Dockerfile:
 
-## 🧠 Philosophy
+```
+ARG PROJECT=p1
+```
 
-> “I design systems that think like traders and learn like founders.”
+## Submission
 
-This philosophy unites two disciplines:
+Read the directions [here](../projects.md) about how to create the repo.
 
-- **Think like traders:** systems that are analytical, probabilistic, and driven by quantitative reasoning — adapting to uncertainty with precision.  
-- **Learn like founders:** systems that evolve, iterate, and scale intelligently — learning from feedback and optimizing for growth.  
+Your submission repo should contain the following files:
+* `docker.txt` - Docker version output
+* `compose.txt` - Docker Compose version output  
+* `Dockerfile.ollama` - Base image with ollama and gemma3:1b
+* `Dockerfile.analyzer` - Analyzer image that builds on ollama image
+* `analyze.sh` - Startup script for the analyzer container
+* `ai.md` - Answers about your AI usage
 
-Together, they form a design mindset where software becomes **both adaptive and strategic**, bridging **quant research** and **startup innovation**.
+## Tester
 
----
-
-## 🌍 Vision
-
-Building **autonomous analytical systems** that transform how we interact with data, finance, and behavior —  
-from algorithmic trading to human-centric SaaS.  
-Each project here reflects a pursuit of **clarity, scalability, and measurable impact**.
-
----
-
-## 📬 Contact
-
-**Arin Mahapatra**  
-🎓 Major: Computer Science & Data Science // Minor: Economic Analytics and Leadership @ UW–Madison  
-🌐 [GitHub Portfolio](https://github.com/arinm34/cs-portfolio/edit/main/README.md)  
-📧 arin.mahapatra@wisc.edu  
-💼 [LinkedIn](https://www.linkedin.com/in/arin-mahapatra)
-
----
-
-> “A design philosophy that unites quantitative precision with entrepreneurial adaptability — building systems that analyze, act, and evolve like traders and founders alike.”
+You can run the grader *locally* with the command (in your project directory):
+```bash
+autobadger --project p1 --verbose
+```
+> Note: this runs the tester locally and is not a submission. You must push your code to your `main` branch. Our grading VM will run the same script against your most current code. Upon completion, it will push a new issue to your GitLab repository. See the `Issues` tab of your repository. It normally takes a few minutes (sometimes longer, depending on the project). See [project](https://git.doit.wisc.edu/cdis/cs/courses/cs544/f25/main/-/blob/main/projects.md?ref_type=heads) for more detail.

@@ -1,0 +1,43 @@
+# Base: latest Ubuntu LTS
+FROM ubuntu:24.04
+
+# Avoid interactive prompts during apt operations
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install prerequisites and Ollama
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+       ca-certificates \
+       curl \
+       bash \
+       tar \
+    && rm -rf /var/lib/apt/lists/* \
+    && update-ca-certificates \
+    && curl -fsSL https://ollama.com/install.sh | sh
+
+# Make Ollama listen on all interfaces and expose default port
+ENV OLLAMA_HOST=0.0.0.0
+EXPOSE 11434
+
+# Pre-pull the model at build time.
+# We briefly start the Ollama server in the background, wait until it's ready,
+# pull the model, then stop the background server to prevent the build from hanging.
+RUN bash -lc 'set -euo pipefail; \
+  ollama serve & \
+  server_pid=$!; \
+  for i in $(seq 1 60); do \
+    sleep 1; \
+    if curl -sf http://127.0.0.1:11434/api/tags > /dev/null; then \
+      break; \
+    fi; \
+    if [ "$i" -eq 60 ]; then \
+      echo "Ollama server did not become ready in time" >&2; \
+      exit 1; \
+    fi; \
+  done; \
+  ollama pull gemma3:1b; \
+  kill ${server_pid} || true; \
+  wait ${server_pid} || true'
+
+# Default command: run the Ollama server
+CMD ["ollama", "serve"]
