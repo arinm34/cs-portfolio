@@ -1,0 +1,25 @@
+# Dockerfile.analyzer
+ARG PROJECT=p1
+FROM ${PROJECT}-ollama:latest
+
+USER root
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Minimal tools needed by analyze.sh
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends git curl ca-certificates jq && \
+    rm -rf /var/lib/apt/lists/*
+
+# Workspace for clone & outputs
+WORKDIR /work
+
+# Copy the analyzer script
+COPY analyze.sh /usr/local/bin/analyze.sh
+
+# Make it executable; only chown if user 'ollama' exists
+RUN chmod +x /usr/local/bin/analyze.sh && \
+    (getent passwd ollama >/dev/null 2>&1 && chown ollama:ollama /usr/local/bin/analyze.sh || true)
+
+# Run as root (don’t assume an 'ollama' user is present in base)
+CMD ["/usr/local/bin/analyze.sh"]
+
